@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decrypto - Game</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header class="game-header">
+      <button id="backBtn" class="btn btn-icon" aria-label="Back to games">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      </button>
+      <div class="game-info">
+        <h1 id="gameNameDisplay" class="game-title editable">Game Name</h1>
+        <span id="roundCounter" class="round-badge">Round 1</span>
+      </div>
+      <button id="deleteGameBtn" class="btn btn-icon btn-danger-icon" aria-label="Delete game">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </button>
+    </header>
+
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="ownTeam">
+        <span>Own Team</span>
+      </button>
+      <button class="tab-btn" data-tab="opponentTeam">
+        <span>Opponent</span>
+      </button>
+    </nav>
+
+    <main class="game-content">
+      <!-- Own Team Tab -->
+      <section id="ownTeamTab" class="tab-content active">
+        <div class="table-container">
+          <table class="game-table" id="ownTeamTable">
+            <thead>
+              <tr>
+                <th class="col-round">Round</th>
+                <th class="col-hint">1</th>
+                <th class="col-hint">2</th>
+                <th class="col-hint">3</th>
+                <th class="col-hint">4</th>
+                <th class="col-ans">ans</th>
+              </tr>
+            </thead>
+            <tbody id="ownTeamBody">
+              <!-- Rows will be rendered here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="current-round-area">
+          <div class="answer-display">
+            <span class="answer-label">Answer:</span>
+            <span id="ownTeamAnswer" class="answer-code">-</span>
+          </div>
+          <button id="ownTeamFinalizeBtn" class="btn btn-primary btn-lg">
+            Finalize Round
+          </button>
+        </div>
+      </section>
+
+      <!-- Opponent Team Tab -->
+      <section id="opponentTeamTab" class="tab-content">
+        <div class="term-guess-section">
+          <h3>Term Guess</h3>
+          <div class="term-guess-inputs">
+            <div class="term-input-group">
+              <label>Term 1</label>
+              <input type="text" id="opponentTerm1" placeholder="?" data-index="0">
+            </div>
+            <div class="term-input-group">
+              <label>Term 2</label>
+              <input type="text" id="opponentTerm2" placeholder="?" data-index="1">
+            </div>
+            <div class="term-input-group">
+              <label>Term 3</label>
+              <input type="text" id="opponentTerm3" placeholder="?" data-index="2">
+            </div>
+            <div class="term-input-group">
+              <label>Term 4</label>
+              <input type="text" id="opponentTerm4" placeholder="?" data-index="3">
+            </div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="game-table" id="opponentTeamTable">
+            <thead>
+              <tr>
+                <th class="col-round">Round</th>
+                <th class="col-hint">1</th>
+                <th class="col-hint">2</th>
+                <th class="col-hint">3</th>
+                <th class="col-hint">4</th>
+                <th class="col-ans">ans</th>
+              </tr>
+            </thead>
+            <tbody id="opponentTeamBody">
+              <!-- Rows will be rendered here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="current-round-area">
+          <div class="answer-display">
+            <span class="answer-label">Answer:</span>
+            <span id="opponentTeamAnswer" class="answer-code">-</span>
+          </div>
+          <button id="opponentTeamFinalizeBtn" class="btn btn-primary btn-lg">
+            Finalize Round
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit Round Modal -->
+  <div id="editRoundModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Round</h3>
+        <button class="modal-close" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="editRoundForm">
+        <input type="hidden" id="editTeamType">
+        <input type="hidden" id="editRoundIndex">
+        <div class="form-group">
+          <label>Hint 1</label>
+          <input type="text" id="editHint1" required>
+        </div>
+        <div class="form-group">
+          <label>Hint 2</label>
+          <input type="text" id="editHint2" required>
+        </div>
+        <div class="form-group">
+          <label>Hint 3</label>
+          <input type="text" id="editHint3" required>
+        </div>
+        <div class="form-group">
+          <label>Answer (3 digits)</label>
+          <input type="text" id="editAnswer" pattern="[1-4]{3}" maxlength="3" inputmode="numeric" placeholder="123">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" id="deleteRoundBtn">Delete</button>
+          <button type="button" class="btn btn-secondary" id="cancelEditRoundBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initGamePage();
+    });
+  </script>
+</body>
+</html>
