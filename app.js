@@ -349,30 +349,36 @@ function renderTeamTable(teamType, teamData) {
   
   let html = '';
   
-  // Render completed rounds
+  // Render completed rounds with draggable hints
   rounds.forEach((round, index) => {
-    const answer = round.answer || '-';
     const hints = round.hints || ['', '', ''];
     const positions = round.positions || [1, 2, 3, 4];
+    const answer = calculateAnswer(positions);
     
-    // positions[hintIdx] = column where hint (hintIdx+1) is placed
-    // Build hintAtColumn: which hint is at each column (1-4)
     const hintAtColumn = [null, null, null, null];
     for (let hintIdx = 0; hintIdx < 3; hintIdx++) {
       const col = positions[hintIdx];
       if (col >= 1 && col <= 4) {
-        hintAtColumn[col - 1] = hints[hintIdx];
+        hintAtColumn[col - 1] = { hintIndex: hintIdx, hintValue: hints[hintIdx] };
       }
     }
     
     html += `
-      <tr class="completed-row" data-team="${teamType}" data-index="${index}">
+      <tr class="completed-row editable-row" data-team="${teamType}" data-round-index="${index}">
         <td>${round.round}</td>
-        <td>${escapeHtml(hintAtColumn[0] || '')}</td>
-        <td>${escapeHtml(hintAtColumn[1] || '')}</td>
-        <td>${escapeHtml(hintAtColumn[2] || '')}</td>
-        <td>${escapeHtml(hintAtColumn[3] || '')}</td>
-        <td><strong>${escapeHtml(answer)}</strong></td>
+        <td class="hint-col" data-col-index="0" data-hint-index="${hintAtColumn[0]?.hintIndex ?? -1}">
+          ${renderHintCellFromColumn(0, hintAtColumn[0], teamType, index)}
+        </td>
+        <td class="hint-col" data-col-index="1" data-hint-index="${hintAtColumn[1]?.hintIndex ?? -1}">
+          ${renderHintCellFromColumn(1, hintAtColumn[1], teamType, index)}
+        </td>
+        <td class="hint-col" data-col-index="2" data-hint-index="${hintAtColumn[2]?.hintIndex ?? -1}">
+          ${renderHintCellFromColumn(2, hintAtColumn[2], teamType, index)}
+        </td>
+        <td class="hint-col drop-cell" data-col-index="3" data-hint-index="${hintAtColumn[3]?.hintIndex ?? -1}">
+          ${renderHintCellFromColumn(3, hintAtColumn[3], teamType, index)}
+        </td>
+        <td class="answer-cell"><strong>${escapeHtml(answer)}</strong></td>
       </tr>
     `;
   });
@@ -433,9 +439,11 @@ function renderHintCell(hintIndex, hintValue, positionNum, teamType) {
   `;
 }
 
-function renderHintCellFromColumn(colIndex, hintData, teamType) {
+function renderHintCellFromColumn(colIndex, hintData, teamType, roundIndex = null) {
+  const roundAttr = roundIndex !== null ? ` data-round-index="${roundIndex}"` : '';
+  
   if (!hintData) {
-    return `<div class="hint-cell empty-cell" data-col-index="${colIndex}" data-team="${teamType}"></div>`;
+    return `<div class="hint-cell empty-cell" data-col-index="${colIndex}" data-team="${teamType}"${roundAttr}></div>`;
   }
   
   const { hintIndex, hintValue } = hintData;
@@ -443,7 +451,7 @@ function renderHintCellFromColumn(colIndex, hintData, teamType) {
   const hintNum = hintIndex + 1;
   
   return `
-    <div class="hint-cell" data-hint-index="${hintIndex}" data-col-index="${colIndex}" data-team="${teamType}">
+    <div class="hint-cell" data-hint-index="${hintIndex}" data-col-index="${colIndex}" data-team="${teamType}"${roundAttr}>
       <span class="hint-number">${hintNum}</span>
       <span class="hint-text ${hasHint ? '' : 'empty'}">
         ${hasHint ? escapeHtml(hintValue) : 'Tap to edit'}
@@ -454,127 +462,137 @@ function renderHintCellFromColumn(colIndex, hintData, teamType) {
 
 function setupDragAndDrop(teamType) {
   const tbody = document.getElementById(`${teamType}Body`);
-  const rows = tbody.querySelectorAll('.current-row');
-  const row = rows[0];
-  if (!row) return;
-
-  const hintCells = row.querySelectorAll('.hint-cell');
-  const dropCells = row.querySelectorAll('.drop-cell');
-  const allCells = row.querySelectorAll('.hint-col');
+  const rows = tbody.querySelectorAll('.editable-row, .current-row');
   
-  let draggedCell = null;
-  let draggedHintIndex = -1;
-  let startX = 0;
-  let startY = 0;
-  let isDragging = false;
-  let hasMoved = false;
+  rows.forEach(row => {
+    const allCells = row.querySelectorAll('.hint-col');
+    const roundIndex = row.dataset.roundIndex !== undefined ? parseInt(row.dataset.roundIndex) : null;
+    
+    let draggedCell = null;
+    let draggedHintIndex = -1;
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+    let hasMoved = false;
 
-  allCells.forEach((cell) => {
-    const hintIndex = cell.dataset.hintIndex !== undefined ? parseInt(cell.dataset.hintIndex) : -1;
-    const colIndex = parseInt(cell.dataset.colIndex);
+    allCells.forEach((cell) => {
+      const hintIndex = cell.dataset.hintIndex !== undefined ? parseInt(cell.dataset.hintIndex) : -1;
+      const colIndex = parseInt(cell.dataset.colIndex);
 
-    cell.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      startX = e.clientX;
-      startY = e.clientY;
-      draggedCell = cell;
-      draggedHintIndex = hintIndex;
-      isDragging = false;
-      hasMoved = false;
-      cell.setPointerCapture(e.pointerId);
-    });
+      cell.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startY = e.clientY;
+        draggedCell = cell;
+        draggedHintIndex = hintIndex;
+        isDragging = false;
+        hasMoved = false;
+        cell.setPointerCapture(e.pointerId);
+      });
 
-    cell.addEventListener('pointermove', (e) => {
-      if (!draggedCell || draggedCell !== cell) return;
-      
-      const dx = Math.abs(e.clientX - startX);
-      const dy = Math.abs(e.clientY - startY);
-      
-      if (!hasMoved && (dx > 10 || dy > 10)) {
-        hasMoved = true;
-        isDragging = true;
-        cell.classList.add('dragging');
-      }
-
-      if (isDragging) {
-        allCells.forEach(c => {
-          if (c !== draggedCell) {
-            const rect = c.getBoundingClientRect();
-            if (e.clientX >= rect.left && e.clientX <= rect.right &&
-                e.clientY >= rect.top && e.clientY <= rect.bottom) {
-              c.classList.add('drag-over');
-            } else {
-              c.classList.remove('drag-over');
-            }
-          }
-        });
-      }
-    });
-
-    cell.addEventListener('pointerup', (e) => {
-      if (!draggedCell || draggedCell !== cell) return;
-
-      if (isDragging && hasMoved && draggedHintIndex !== -1) {
-        const targetCell = Array.from(allCells).find(c => {
-          if (c === draggedCell) return false;
-          const rect = c.getBoundingClientRect();
-          return e.clientX >= rect.left && e.clientX <= rect.right &&
-                 e.clientY >= rect.top && e.clientY <= rect.bottom;
-        });
-
-        if (targetCell) {
-          const targetColIndex = parseInt(targetCell.dataset.colIndex);
-          
-          if (!isNaN(targetColIndex) && !isNaN(colIndex) &&
-              targetColIndex !== colIndex) {
-            
-            const games = getGames();
-            const game = games[currentGameId];
-            if (game) {
-              const team = game[teamType];
-              const positions = [...(team.current.positions || [1, 2, 3, 4])];
-              
-              const sourcePosition = colIndex + 1;
-              const targetPosition = targetColIndex + 1;
-              
-              const hintAtTargetCol = positions.indexOf(targetPosition);
-              
-              positions[draggedHintIndex] = targetPosition;
-              
-              // Only swap if there's an actual hint at target column (indices 0-2)
-              if (hintAtTargetCol !== -1 && hintAtTargetCol !== draggedHintIndex && hintAtTargetCol < 3) {
-                positions[hintAtTargetCol] = sourcePosition;
-              }
-              
-              team.current.positions = positions;
-              game.updatedAt = new Date().toISOString();
-              saveGames(games);
-              renderTables();
-            }
-          }
+      cell.addEventListener('pointermove', (e) => {
+        if (!draggedCell || draggedCell !== cell) return;
+        
+        const dx = Math.abs(e.clientX - startX);
+        const dy = Math.abs(e.clientY - startY);
+        
+        if (!hasMoved && (dx > 10 || dy > 10)) {
+          hasMoved = true;
+          isDragging = true;
+          cell.classList.add('dragging');
         }
-      } else if (!hasMoved && draggedHintIndex !== -1) {
-        openHintModal(teamType, draggedHintIndex);
-      }
 
-      draggedCell.classList.remove('dragging');
-      allCells.forEach(c => c.classList.remove('drag-over'));
-      draggedCell = null;
-      draggedHintIndex = -1;
-      isDragging = false;
-      hasMoved = false;
-      cell.releasePointerCapture(e.pointerId);
-    });
+        if (isDragging) {
+          allCells.forEach(c => {
+            if (c !== draggedCell) {
+              const rect = c.getBoundingClientRect();
+              if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                  e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                c.classList.add('drag-over');
+              } else {
+                c.classList.remove('drag-over');
+              }
+            }
+          });
+        }
+      });
 
-    cell.addEventListener('pointercancel', (e) => {
-      if (draggedCell) {
+      cell.addEventListener('pointerup', (e) => {
+        if (!draggedCell || draggedCell !== cell) return;
+
+        if (isDragging && hasMoved && draggedHintIndex !== -1) {
+          const targetCell = Array.from(allCells).find(c => {
+            if (c === draggedCell) return false;
+            const rect = c.getBoundingClientRect();
+            return e.clientX >= rect.left && e.clientX <= rect.right &&
+                   e.clientY >= rect.top && e.clientY <= rect.bottom;
+          });
+
+          if (targetCell) {
+            const targetColIndex = parseInt(targetCell.dataset.colIndex);
+            
+            if (!isNaN(targetColIndex) && !isNaN(colIndex) &&
+                targetColIndex !== colIndex) {
+              
+              const games = getGames();
+              const game = games[currentGameId];
+              if (game) {
+                const team = game[teamType];
+                let positions;
+                
+                if (roundIndex !== null) {
+                  positions = [...(team.rounds[roundIndex].positions || [1, 2, 3, 4])];
+                } else {
+                  positions = [...(team.current.positions || [1, 2, 3, 4])];
+                }
+                
+                const sourcePosition = colIndex + 1;
+                const targetPosition = targetColIndex + 1;
+                
+                const hintAtTargetCol = positions.indexOf(targetPosition);
+                
+                positions[draggedHintIndex] = targetPosition;
+                
+                if (hintAtTargetCol !== -1 && hintAtTargetCol !== draggedHintIndex && hintAtTargetCol < 3) {
+                  positions[hintAtTargetCol] = sourcePosition;
+                }
+                
+                if (roundIndex !== null) {
+                  team.rounds[roundIndex].positions = positions;
+                  team.rounds[roundIndex].answer = calculateAnswer(positions);
+                } else {
+                  team.current.positions = positions;
+                }
+                
+                game.updatedAt = new Date().toISOString();
+                saveGames(games);
+                renderTables();
+              }
+            }
+          }
+        } else if (!hasMoved && draggedHintIndex !== -1) {
+          openHintModal(teamType, draggedHintIndex, roundIndex);
+        }
+
         draggedCell.classList.remove('dragging');
         allCells.forEach(c => c.classList.remove('drag-over'));
-      }
-      draggedCell = null;
-      draggedHintIndex = -1;
-      isDragging = false;
-      hasMoved = false;
+        draggedCell = null;
+        draggedHintIndex = -1;
+        isDragging = false;
+        hasMoved = false;
+        cell.releasePointerCapture(e.pointerId);
+      });
+
+      cell.addEventListener('pointercancel', (e) => {
+        if (draggedCell) {
+          draggedCell.classList.remove('dragging');
+          allCells.forEach(c => c.classList.remove('drag-over'));
+        }
+        draggedCell = null;
+        draggedHintIndex = -1;
+        isDragging = false;
+        hasMoved = false;
+      });
     });
   });
 }
@@ -757,6 +775,8 @@ function setupHintModal() {
 
     const teamType = document.getElementById('hintTeamType').value;
     const positionIndex = parseInt(document.getElementById('hintPositionIndex').value);
+    const roundIndexInput = document.getElementById('hintRoundIndex').value;
+    const roundIndex = roundIndexInput !== '' ? parseInt(roundIndexInput) : null;
     const hintWord = document.getElementById('hintWord').value.trim();
 
     if (isNaN(positionIndex) || positionIndex < 0 || positionIndex > 3) {
@@ -769,7 +789,11 @@ function setupHintModal() {
     
     if (game && game[teamType]) {
       const team = game[teamType];
-      team.current.hints[positionIndex] = hintWord;
+      if (roundIndex !== null && team.rounds[roundIndex]) {
+        team.rounds[roundIndex].hints[positionIndex] = hintWord;
+      } else {
+        team.current.hints[positionIndex] = hintWord;
+      }
       game.updatedAt = new Date().toISOString();
       saveGames(games);
       renderTables();
@@ -779,16 +803,23 @@ function setupHintModal() {
   });
 }
 
-function openHintModal(teamType, positionIndex) {
+function openHintModal(teamType, positionIndex, roundIndex = null) {
   const games = getGames();
   const game = games[currentGameId];
   if (!game) return;
 
   const team = game[teamType];
-  const currentHint = (team.current.hints && team.current.hints[positionIndex]) || '';
+  let currentHint = '';
+  
+  if (roundIndex !== null && team.rounds[roundIndex]) {
+    currentHint = team.rounds[roundIndex].hints[positionIndex] || '';
+  } else {
+    currentHint = (team.current.hints && team.current.hints[positionIndex]) || '';
+  }
 
   document.getElementById('hintTeamType').value = teamType;
   document.getElementById('hintPositionIndex').value = positionIndex;
+  document.getElementById('hintRoundIndex').value = roundIndex !== null ? roundIndex : '';
   document.getElementById('hintPositionNum').textContent = positionIndex + 1;
   document.getElementById('hintWord').value = currentHint;
 
