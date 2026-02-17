@@ -27,7 +27,8 @@ function createGame() {
   const games = getGames();
   const id = generateId();
   const now = new Date();
-  const gameName = `Game ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  const dateStr = now.toISOString().split('T')[0];
+  const gameName = `Game ${dateStr} ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
   
   games[id] = {
     id,
@@ -70,8 +71,8 @@ function renderGamesList() {
   emptyState.classList.add('hidden');
   
   gamesList.innerHTML = gamesArray.map(game => {
-    const createdDate = new Date(game.createdAt).toLocaleDateString();
-    const round = game.currentRound || 1;
+    const date = new Date(game.createdAt);
+    const createdDate = date.toISOString().split('T')[0];
     
     return `
       <div class="game-card" data-id="${game.id}">
@@ -80,7 +81,6 @@ function renderGamesList() {
           <div class="game-card-name">${escapeHtml(game.name)}</div>
           <div class="game-card-meta">
             <span>${createdDate}</span>
-            <span>Round ${round}</span>
           </div>
         </div>
       </div>
