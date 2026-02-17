@@ -249,6 +249,9 @@ function initGamePage() {
 
   // Render tables
   renderTables();
+  
+  // Setup tap handlers
+  setupRoundRowTaps();
 }
 
 function setupTabs() {
@@ -301,6 +304,40 @@ function renderTables() {
   renderTeamTable('opponentTeam', game.opponentTeam);
 }
 
+function setupRoundRowTaps() {
+  const ownTeamBody = document.getElementById('ownTeamBody');
+  const opponentTeamBody = document.getElementById('opponentTeamBody');
+  
+  setupTapsForTable(ownTeamBody);
+  setupTapsForTable(opponentTeamBody);
+}
+
+function setupTapsForTable(tbody) {
+  if (!tbody) return;
+  
+  const rows = tbody.querySelectorAll('.completed-row');
+  let lastTapTime = 0;
+  let lastTapRow = null;
+  
+  rows.forEach(row => {
+    row.addEventListener('click', (e) => {
+      const now = Date.now();
+      const teamType = row.dataset.team;
+      const index = parseInt(row.dataset.index);
+      
+      // Check if this is a double-tap on the same row
+      if (lastTapRow === row && (now - lastTapTime) < 300) {
+        openEditRound(teamType, index);
+        lastTapRow = null;
+        lastTapTime = 0;
+      } else {
+        lastTapRow = row;
+        lastTapTime = now;
+      }
+    });
+  });
+}
+
 function renderTeamTable(teamType, teamData) {
   const tbody = document.getElementById(`${teamType}Body`);
   const answerDisplay = document.getElementById(`${teamType}Answer`);
@@ -327,7 +364,7 @@ function renderTeamTable(teamType, teamData) {
     });
     
     html += `
-      <tr onclick="openEditRound('${teamType}', ${index})">
+      <tr class="completed-row" data-team="${teamType}" data-index="${index}">
         <td>${round.round}</td>
         <td>${escapeHtml(hintAtColumn[0] || '')}</td>
         <td>${escapeHtml(hintAtColumn[1] || '')}</td>
@@ -379,11 +416,8 @@ function renderHintCell(hintIndex, hintValue, positions, teamType) {
   return `
     <div class="hint-cell" data-hint-index="${hintIndex}" data-team="${teamType}">
       <span class="hint-number">${colHintNum}</span>
-      <span class="hint-text ${hasHint ? '' : 'empty'}" data-hint-index="${hintIndex}" data-team="${teamType}">
+      <span class="hint-text ${hasHint ? '' : 'empty'}">
         ${hasHint ? escapeHtml(hintValue) : 'Tap to add'}
-      </span>
-      <span class="drag-handle" draggable="true" data-hint-index="${hintIndex}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/></svg>
       </span>
     </div>
   `;
@@ -399,9 +433,6 @@ function setupHintCellClicks(teamType) {
     const hintIndex = parseInt(cell.dataset.hintIndex);
     
     cell.addEventListener('click', (e) => {
-      if (e.target.classList.contains('drag-handle') || e.target.closest('.drag-handle')) {
-        return;
-      }
       openHintModal(teamType, hintIndex);
     });
   });
@@ -414,27 +445,39 @@ function setupDragAndDrop(teamType) {
   if (!row) return;
 
   const hintCells = row.querySelectorAll('.hint-cell');
-  const dragHandles = row.querySelectorAll('.drag-handle');
   let draggedCell = null;
   let draggedHintIndex = -1;
+  let isDragging = false;
 
-  dragHandles.forEach((handle) => {
-    handle.addEventListener('dragstart', (e) => {
-      const cell = handle.closest('.hint-cell');
-      draggedCell = cell;
-      draggedHintIndex = parseInt(handle.dataset.hintIndex);
+  // Press handler on hint cells to initiate drag immediately
+  hintCells.forEach((cell) => {
+    const startDrag = (e) => {
+      const hintIndex = parseInt(cell.dataset.hintIndex);
+      if (hintIndex > 2) return;
+      
+      isDragging = true;
       cell.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'swap';
-      e.stopPropagation();
-    });
+      
+      draggedCell = cell;
+      draggedHintIndex = hintIndex;
+      
+      const dragEvent = new DragEvent('dragstart', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: new DataTransfer()
+      });
+      dragEvent.dataTransfer.effectAllowed = 'swap';
+      cell.dispatchEvent(dragEvent);
+    };
 
-    handle.addEventListener('dragend', () => {
-      if (draggedCell) {
-        draggedCell.classList.remove('dragging');
-      }
-      hintCells.forEach(c => c.classList.remove('drag-over'));
-      draggedCell = null;
-      draggedHintIndex = -1;
+    // Touch events
+    cell.addEventListener('touchstart', (e) => {
+      startDrag(e);
+    }, { passive: true });
+    
+    // Mouse events
+    cell.addEventListener('mousedown', (e) => {
+      startDrag(e);
     });
   });
 
@@ -478,6 +521,16 @@ function setupDragAndDrop(teamType) {
       game.updatedAt = new Date().toISOString();
       saveGames(games);
       renderTables();
+    });
+
+    cell.addEventListener('dragend', () => {
+      if (draggedCell) {
+        draggedCell.classList.remove('dragging');
+      }
+      hintCells.forEach(c => c.classList.remove('drag-over'));
+      draggedCell = null;
+      draggedHintIndex = -1;
+      isDragging = false;
     });
   });
 }

@@ -535,10 +535,13 @@ form {
 
 .tab-content {
   display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
 .tab-content.active {
   display: block;
+  opacity: 1;
 }
 
 /* Term Guess Section (Opponent only) */
@@ -640,8 +643,9 @@ form {
 
 /* Table Row */
 .game-table tbody tr {
-  cursor: pointer;
   transition: background var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .game-table tbody tr:hover {
@@ -669,35 +673,20 @@ form {
   gap: 2px;
   padding: 4px;
   min-height: 50px;
-  cursor: pointer;
+  cursor: grab;
   border-radius: var(--radius-sm);
   transition: background var(--transition);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hint-cell:active {
+  cursor: grabbing;
 }
 
 .hint-cell:hover {
   background: rgba(8, 145, 178, 0.1);
-}
-
-.drag-handle {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  border-radius: 4px;
-  transition: background var(--transition), color var(--transition);
-}
-
-.drag-handle:hover {
-  background: var(--primary);
-  color: white;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
 }
 
 .hint-number {
@@ -730,11 +719,16 @@ form {
 }
 
 .hint-cell.dragging {
-  opacity: 0.5;
+  opacity: 0.6;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
 }
 
 .hint-cell.drag-over {
-  background: rgba(8, 145, 178, 0.2);
+  background: rgba(8, 145, 178, 0.25);
+  border: 2px dashed var(--primary);
 }
 
 /* Answer Display */
