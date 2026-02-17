@@ -602,7 +602,7 @@ function finalizeRound(teamType) {
   const positions = current.positions || [1, 2, 3];
 
   // Check if all hints are filled
-  const hasAllHints = hints.every(h => h.trim());
+  const hasAllHints = hints.slice(0, 3).every(h => h.trim());
   if (!hasAllHints) {
     alert('Please fill in all 3 hints before finalizing.');
     return;
