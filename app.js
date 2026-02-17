@@ -35,14 +35,15 @@ function createGame() {
     name: gameName,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
-    currentRound: 1,
     ownTeam: {
       rounds: [],
+      currentRound: 1,
       current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] }
     },
     opponentTeam: {
       guessedTerms: ['', '', '', ''],
       rounds: [],
+      currentRound: 1,
       current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] }
     }
   };
@@ -388,6 +389,7 @@ function renderTeamTable(teamType, teamData) {
   // Click on cell (not drag handle) opens modal to enter hint
   const currentHints = current.hints || ['', '', '', ''];
   const currentPositions = current.positions || [1, 2, 3, 4];
+  const currentRoundNum = teamData.currentRound || rounds.length + 1;
 
   // Render 4 columns with hints positioned accordingly
   // Find which hint is at each column (1-4)
@@ -401,7 +403,7 @@ function renderTeamTable(teamType, teamData) {
 
   html += `
     <tr class="current-row" data-team="${teamType}">
-      <td>${rounds.length + 1}</td>
+      <td>${currentRoundNum}</td>
       <td class="hint-col" data-col-index="0" data-hint-index="${hintAtColumn[0]?.hintIndex ?? -1}">
         ${renderHintCellFromColumn(0, hintAtColumn[0], teamType)}
       </td>
@@ -631,7 +633,7 @@ function finalizeRound(teamType) {
 
   // Add to rounds
   const roundData = {
-    round: game.currentRound || 1,
+    round: team.currentRound || team.rounds.length + 1,
     hints: [...hints],
     positions: [...positions],
     answer: answer
@@ -647,8 +649,8 @@ function finalizeRound(teamType) {
   // Reset current round
   team.current = { hints: ['', '', '', ''], positions: [1, 2, 3, 4] };
 
-  // Increment round
-  game.currentRound = (game.currentRound || 1) + 1;
+  // Increment team's round counter
+  team.currentRound = (team.currentRound || team.rounds.length) + 1;
   game.updatedAt = new Date().toISOString();
 
   saveGames(games);
