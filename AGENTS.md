@@ -177,7 +177,66 @@ function escapeHtml(text) {
 
 ---
 
-## 5. Git Conventions
+## 6. Hint Positioning Workflow
+
+### Overview
+Hint 1 - 3 means the first, second, third digit.
+In the current row, hints 1-3 can be positioned in columns 1-4. Users can:
+- Move hints around by dragging (hint swaps position with target column)
+- Double-click to open edit modal to enter hint text
+- Position a hint in column 4 (extra hint position)
+
+### Data Structure
+```javascript
+// positions array: which column (1-4) each hint is placed in
+// positions[0] = column where hint 1 is (1-4)
+// positions[1] = column where hint 2 is (1-4)
+// positions[2] = column where hint 3 is (1-4)
+// positions[3] = placeholder for hint 4 (not used)
+
+// Example: hint 1 in col 2, hint 2 in col 4, hint 3 in col 3
+// positions = [2, 4, 3]  // hint1 at col2, hint2 at col4, hint3 at col3
+// Answer = "243" (digit 1 = col of hint1, digit 2 = col of hint2, digit 3 = col of hint3)
+```
+
+### Answer Calculation
+- Answer is 3 digits representing the column number of each hint
+- digit 1 = column where hint 1 is placed
+- digit 2 = column where hint 2 is placed
+- digit 3 = column where hint 3 is placed
+- Example: hint1 at col2, hint2 at col4, hint3 at col3 → Answer: "243"
+
+### Key Functions
+
+**`renderTeamTable(teamType, teamData)`**
+- Renders 4 columns (1, 2, 3, 4) for current row
+- Iterates through hints and places each at its designated column
+- Column 4 displays hint when a hint has position 4
+
+**`renderHintCell(hintIndex, hintValue, positionNum, teamType)`**
+- hintIndex: 0, 1, or 2 (index in hints array)
+- hintValue: the hint word
+- positionNum: which column this hint occupies (1-4)
+- Renders a draggable hint cell
+
+**`setupDragAndDrop(teamType)`**
+- Handles pointer events for dragging hints between columns
+- On drop: swap positions between source and target columns
+- Supports dropping into column 4
+
+**`calculateAnswer(positions)`**
+- Returns 3-digit string from positions[0], positions[1], positions[2]
+- Each digit is the hint number at that column
+
+### Common Bugs to Avoid
+1. **Column 4 not rendering hint**: Ensure `renderTeamTable` renders hint cell in column 4 when a hint has position 4
+2. **Answer ignores column 4**: The answer is always 3 digits (columns 1-3), but column 4 hint can affect the answer via swap
+3. **Hint modal only opens for columns 1-3**: Validate positionIndex 0-3, not 0-2
+4. **Drag swap logic**: When dragging hint from col2 to col4, swap the position numbers (not indices)
+
+---
+
+## 7. Git Conventions
 
 - Commit messages: clear, concise
 - No need for conventional commits (simple project)
