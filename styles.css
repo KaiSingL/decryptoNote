@@ -685,9 +685,7 @@ form {
   cursor: grabbing;
 }
 
-.hint-cell:hover {
-  background: rgba(8, 145, 178, 0.1);
-}
+
 
 .hint-number {
   font-size: 0.7rem;
@@ -726,7 +724,7 @@ form {
   position: relative;
 }
 
-.hint-cell.drag-over {
+.hint-col.drag-over {
   background: rgba(8, 145, 178, 0.25);
   border: 2px dashed var(--primary);
 }
@@ -746,10 +744,7 @@ form {
   min-height: 50px;
   cursor: pointer;
 }
-
-.empty-cell:hover {
-  background: rgba(8, 145, 178, 0.1);
-}
+  
 
 /* Answer Display */
 .current-round-area {
