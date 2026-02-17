@@ -580,26 +580,31 @@ form {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
+  table-layout: auto;
 }
 
 .game-table th,
 .game-table td {
-  padding: 10px 8px;
+  padding: 10px 6px;
   text-align: center;
   border-bottom: 1px solid var(--border);
+  word-wrap: break-word;
+  overflow: hidden;
 }
 
 .game-table th {
   background: var(--primary);
   color: white;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   position: sticky;
   top: 0;
+  white-space: nowrap;
 }
 
 .col-round {
   width: 50px;
+  min-width: 40px;
 }
 
 .col-hint {
@@ -608,7 +613,9 @@ form {
 
 .col-ans {
   width: 50px;
+  min-width: 40px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Table Row */
@@ -625,52 +632,81 @@ form {
   background: rgba(8, 145, 178, 0.1);
 }
 
+.game-table tbody tr.current-row:hover {
+  background: rgba(8, 145, 178, 0.15);
+}
+
 .game-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Draggable Hint Cell */
+/* Hint Cell (Current Row) */
 .hint-cell {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 2px;
   padding: 4px;
+  min-height: 50px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.hint-cell:hover {
+  background: rgba(8, 145, 178, 0.1);
 }
 
 .drag-handle {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
   color: var(--text-muted);
   flex-shrink: 0;
+  border-radius: 4px;
+  transition: background var(--transition), color var(--transition);
+}
+
+.drag-handle:hover {
+  background: var(--primary);
+  color: white;
 }
 
 .drag-handle:active {
   cursor: grabbing;
 }
 
-.hint-input {
-  flex: 1;
-  min-width: 0;
-  padding: 6px 8px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-card);
+.hint-number {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--bg);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.hint-input:focus {
-  outline: none;
-  border-color: var(--primary);
+.hint-text {
+  font-size: 0.8rem;
+  color: var(--text);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
-.hint-input::placeholder {
+.hint-text.empty {
   color: var(--text-muted);
-  opacity: 0.5;
+  font-style: italic;
 }
 
 .hint-cell.dragging {
@@ -736,9 +772,13 @@ form {
     font-size: 0.9rem;
   }
 
-  .hint-input {
-    padding: 8px 12px;
-    font-size: 0.9rem;
+  .game-table th,
+  .game-table td {
+    padding: 12px 10px;
+  }
+
+  .hint-text {
+    max-width: 120px;
   }
 
   .term-guess-inputs {
