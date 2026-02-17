@@ -777,7 +777,6 @@ form {
 
 .drop-cell {
   min-height: 50px;
-  border-radius: var(--radius-sm);
   transition: background var(--transition);
 }
 
