@@ -686,25 +686,27 @@ form {
   background: var(--bg);
 }
 
-.game-table tbody tr.current-row {
+.game-table tbody tr.completed-row {
   background: rgba(8, 145, 178, 0.1);
 }
 
-.game-table tbody tr.current-row:hover {
+.game-table tbody tr.completed-row:hover {
   background: rgba(8, 145, 178, 0.15);
+}
+
+#opponentTeamTab .game-table tbody tr.completed-row {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+#opponentTeamTab .game-table tbody tr.completed-row:hover {
+  background: rgba(124, 58, 237, 0.15);
 }
 
 #opponentTeamTable th {
   background: var(--opponent);
 }
 
-#opponentTeamTab .game-table tbody tr.current-row {
-  background: rgba(124, 58, 237, 0.1);
-}
 
-#opponentTeamTab .game-table tbody tr.current-row:hover {
-  background: rgba(124, 58, 237, 0.15);
-}
 
 .game-table tbody tr:last-child td {
   border-bottom: none;
