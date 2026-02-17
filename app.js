@@ -37,12 +37,12 @@ function createGame() {
     currentRound: 1,
     ownTeam: {
       rounds: [],
-      current: { hints: ['', '', ''], positions: [1, 2, 3] }
+      current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] }
     },
     opponentTeam: {
       guessedTerms: ['', '', '', ''],
       rounds: [],
-      current: { hints: ['', '', ''], positions: [1, 2, 3] }
+      current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] }
     }
   };
 
@@ -325,7 +325,7 @@ function setupTapsForTable(tbody) {
       const teamType = row.dataset.team;
       const index = parseInt(row.dataset.index);
       
-      // Check if this is a double-tap on the same row
+      // Check if this is a tap on the same row
       if (lastTapRow === row && (now - lastTapTime) < 300) {
         openEditRound(teamType, index);
         lastTapRow = null;
@@ -345,7 +345,7 @@ function renderTeamTable(teamType, teamData) {
   if (!tbody) return;
 
   const rounds = teamData.rounds || [];
-  const current = teamData.current || { hints: ['', '', ''], positions: [1, 2, 3] };
+  const current = teamData.current || { hints: ['', '', '', ''], positions: [1, 2, 3, 4] };
   
   let html = '';
   
@@ -353,15 +353,17 @@ function renderTeamTable(teamType, teamData) {
   rounds.forEach((round, index) => {
     const answer = round.answer || '-';
     const hints = round.hints || ['', '', ''];
-    const positions = round.positions || [1, 2, 3];
+    const positions = round.positions || [1, 2, 3, 4];
     
-    // Create hint array based on positions: position[i] = which hint is at column i+1
-    const hintAtColumn = ['', '', '', ''];
-    positions.forEach((hintIdx, colIdx) => {
-      if (colIdx < 4 && hintIdx >= 1 && hintIdx <= 3) {
-        hintAtColumn[colIdx] = hints[hintIdx - 1] || '';
+    // positions[hintIdx] = column where hint (hintIdx+1) is placed
+    // Build hintAtColumn: which hint is at each column (1-4)
+    const hintAtColumn = [null, null, null, null];
+    for (let hintIdx = 0; hintIdx < 3; hintIdx++) {
+      const col = positions[hintIdx];
+      if (col >= 1 && col <= 4) {
+        hintAtColumn[col - 1] = hints[hintIdx];
       }
-    });
+    }
     
     html += `
       <tr class="completed-row" data-team="${teamType}" data-index="${index}">
@@ -378,22 +380,33 @@ function renderTeamTable(teamType, teamData) {
   // Render current round with draggable hints
   // Each hint (1, 2, 3) is in its own cell, can be dragged to swap columns
   // Click on cell (not drag handle) opens modal to enter hint
-  const currentHints = current.hints || ['', '', ''];
-  const currentPositions = current.positions || [1, 2, 3];
+  const currentHints = current.hints || ['', '', '', ''];
+  const currentPositions = current.positions || [1, 2, 3, 4];
+
+  // Render 4 columns with hints positioned accordingly
+  // Find which hint is at each column (1-4)
+  const hintAtColumn = [null, null, null, null]; // [col1 hint, col2 hint, col3 hint, col4 hint]
+  for (let hintIdx = 0; hintIdx < 3; hintIdx++) {
+    const pos = currentPositions[hintIdx];
+    if (pos >= 1 && pos <= 4) {
+      hintAtColumn[pos - 1] = { hintIndex: hintIdx, hintValue: currentHints[hintIdx] };
+    }
+  }
 
   html += `
     <tr class="current-row" data-team="${teamType}">
       <td>${rounds.length + 1}</td>
-      <td class="hint-col" data-col="0">
-        ${renderHintCell(0, currentHints[0], currentPositions, teamType)}
+      <td class="hint-col" data-col-index="0" data-hint-index="${hintAtColumn[0]?.hintIndex ?? -1}">
+        ${renderHintCellFromColumn(0, hintAtColumn[0], teamType)}
       </td>
-      <td class="hint-col" data-col="1">
-        ${renderHintCell(1, currentHints[1], currentPositions, teamType)}
+      <td class="hint-col" data-col-index="1" data-hint-index="${hintAtColumn[1]?.hintIndex ?? -1}">
+        ${renderHintCellFromColumn(1, hintAtColumn[1], teamType)}
       </td>
-      <td class="hint-col" data-col="2">
-        ${renderHintCell(2, currentHints[2], currentPositions, teamType)}
+      <td class="hint-col" data-col-index="2" data-hint-index="${hintAtColumn[2]?.hintIndex ?? -1}">
+        ${renderHintCellFromColumn(2, hintAtColumn[2], teamType)}
       </td>
-      <td class="hint-col" data-col="3">
+      <td class="hint-col drop-cell" data-col-index="3" data-hint-index="${hintAtColumn[3]?.hintIndex ?? -1}">
+        ${renderHintCellFromColumn(3, hintAtColumn[3], teamType)}
       </td>
       <td><strong>${calculateAnswer(currentPositions)}</strong></td>
     </tr>
@@ -406,36 +419,37 @@ function renderTeamTable(teamType, teamData) {
 
   // Setup drag and drop and click handlers
   setupDragAndDrop(teamType);
-  setupHintCellClicks(teamType);
 }
 
-function renderHintCell(hintIndex, hintValue, positions, teamType) {
-  const hintNum = hintIndex + 1;
+function renderHintCell(hintIndex, hintValue, positionNum, teamType) {
   const hasHint = hintValue && hintValue.trim().length > 0;
-  const colHintNum = positions && positions[hintIndex] ? positions[hintIndex] : hintNum;
   return `
-    <div class="hint-cell" data-hint-index="${hintIndex}" data-team="${teamType}">
-      <span class="hint-number">${colHintNum}</span>
+    <div class="hint-cell" data-hint-index="${hintIndex}" data-col-index="${hintIndex}" data-position="${positionNum}" data-team="${teamType}">
+      <span class="hint-number">${positionNum || ''}</span>
       <span class="hint-text ${hasHint ? '' : 'empty'}">
-        ${hasHint ? escapeHtml(hintValue) : 'Tap to add'}
+        ${hasHint ? escapeHtml(hintValue) : 'Tap to Edit'}
       </span>
     </div>
   `;
 }
 
-function setupHintCellClicks(teamType) {
-  const tbody = document.getElementById(`${teamType}Body`);
-  const rows = tbody.querySelectorAll('.current-row');
-  const row = rows[0];
-  if (!row) return;
-
-  row.querySelectorAll('.hint-cell').forEach(cell => {
-    const hintIndex = parseInt(cell.dataset.hintIndex);
-    
-    cell.addEventListener('click', (e) => {
-      openHintModal(teamType, hintIndex);
-    });
-  });
+function renderHintCellFromColumn(colIndex, hintData, teamType) {
+  if (!hintData) {
+    return `<div class="hint-cell empty-cell" data-col-index="${colIndex}" data-team="${teamType}"></div>`;
+  }
+  
+  const { hintIndex, hintValue } = hintData;
+  const hasHint = hintValue && hintValue.trim().length > 0;
+  const hintNum = hintIndex + 1;
+  
+  return `
+    <div class="hint-cell" data-hint-index="${hintIndex}" data-col-index="${colIndex}" data-team="${teamType}">
+      <span class="hint-number">${hintNum}</span>
+      <span class="hint-text ${hasHint ? '' : 'empty'}">
+        ${hasHint ? escapeHtml(hintValue) : 'Tap to edit'}
+      </span>
+    </div>
+  `;
 }
 
 function setupDragAndDrop(teamType) {
@@ -445,92 +459,122 @@ function setupDragAndDrop(teamType) {
   if (!row) return;
 
   const hintCells = row.querySelectorAll('.hint-cell');
+  const dropCells = row.querySelectorAll('.drop-cell');
+  const allCells = row.querySelectorAll('.hint-col');
+  
   let draggedCell = null;
   let draggedHintIndex = -1;
+  let startX = 0;
+  let startY = 0;
   let isDragging = false;
+  let hasMoved = false;
 
-  // Press handler on hint cells to initiate drag immediately
-  hintCells.forEach((cell) => {
-    const startDrag = (e) => {
-      const hintIndex = parseInt(cell.dataset.hintIndex);
-      if (hintIndex > 2) return;
-      
-      isDragging = true;
-      cell.classList.add('dragging');
-      
+  allCells.forEach((cell) => {
+    const hintIndex = cell.dataset.hintIndex !== undefined ? parseInt(cell.dataset.hintIndex) : -1;
+    const colIndex = parseInt(cell.dataset.colIndex);
+
+    cell.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
       draggedCell = cell;
       draggedHintIndex = hintIndex;
-      
-      const dragEvent = new DragEvent('dragstart', {
-        bubbles: true,
-        cancelable: true,
-        dataTransfer: new DataTransfer()
-      });
-      dragEvent.dataTransfer.effectAllowed = 'swap';
-      cell.dispatchEvent(dragEvent);
-    };
-
-    // Touch events
-    cell.addEventListener('touchstart', (e) => {
-      startDrag(e);
-    }, { passive: true });
-    
-    // Mouse events
-    cell.addEventListener('mousedown', (e) => {
-      startDrag(e);
+      isDragging = false;
+      hasMoved = false;
+      cell.setPointerCapture(e.pointerId);
     });
-  });
 
-  hintCells.forEach((cell) => {
-    cell.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      if (draggedCell && draggedCell !== cell) {
-        cell.classList.add('drag-over');
+    cell.addEventListener('pointermove', (e) => {
+      if (!draggedCell || draggedCell !== cell) return;
+      
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+      
+      if (!hasMoved && (dx > 10 || dy > 10)) {
+        hasMoved = true;
+        isDragging = true;
+        cell.classList.add('dragging');
+      }
+
+      if (isDragging) {
+        allCells.forEach(c => {
+          if (c !== draggedCell) {
+            const rect = c.getBoundingClientRect();
+            if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                e.clientY >= rect.top && e.clientY <= rect.bottom) {
+              c.classList.add('drag-over');
+            } else {
+              c.classList.remove('drag-over');
+            }
+          }
+        });
       }
     });
 
-    cell.addEventListener('dragleave', () => {
-      cell.classList.remove('drag-over');
-    });
+    cell.addEventListener('pointerup', (e) => {
+      if (!draggedCell || draggedCell !== cell) return;
 
-    cell.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      cell.classList.remove('drag-over');
-      
-      if (!draggedCell || draggedCell === cell) return;
+      if (isDragging && hasMoved && draggedHintIndex !== -1) {
+        const targetCell = Array.from(allCells).find(c => {
+          if (c === draggedCell) return false;
+          const rect = c.getBoundingClientRect();
+          return e.clientX >= rect.left && e.clientX <= rect.right &&
+                 e.clientY >= rect.top && e.clientY <= rect.bottom;
+        });
 
-      const targetHintIndex = parseInt(cell.dataset.hintIndex);
-
-      if (isNaN(targetHintIndex) || isNaN(draggedHintIndex)) return;
-      if (targetHintIndex > 2 || draggedHintIndex > 2) return;
-      if (targetHintIndex === draggedHintIndex) return;
-
-      const games = getGames();
-      const game = games[currentGameId];
-      if (!game) return;
-
-      const team = game[teamType];
-      const positions = [...(team.current.positions || [1, 2, 3])];
-
-      const temp = positions[draggedHintIndex];
-      positions[draggedHintIndex] = positions[targetHintIndex];
-      positions[targetHintIndex] = temp;
-
-      team.current.positions = positions;
-      game.updatedAt = new Date().toISOString();
-      saveGames(games);
-      renderTables();
-    });
-
-    cell.addEventListener('dragend', () => {
-      if (draggedCell) {
-        draggedCell.classList.remove('dragging');
+        if (targetCell) {
+          const targetColIndex = parseInt(targetCell.dataset.colIndex);
+          
+          if (!isNaN(targetColIndex) && !isNaN(colIndex) &&
+              targetColIndex !== colIndex) {
+            
+            const games = getGames();
+            const game = games[currentGameId];
+            if (game) {
+              const team = game[teamType];
+              const positions = [...(team.current.positions || [1, 2, 3, 4])];
+              
+              const sourcePosition = colIndex + 1;
+              const targetPosition = targetColIndex + 1;
+              
+              const hintAtTargetCol = positions.indexOf(targetPosition);
+              
+              positions[draggedHintIndex] = targetPosition;
+              
+              // Only swap if there's an actual hint at target column (indices 0-2)
+              if (hintAtTargetCol !== -1 && hintAtTargetCol !== draggedHintIndex && hintAtTargetCol < 3) {
+                positions[hintAtTargetCol] = sourcePosition;
+              }
+              
+              team.current.positions = positions;
+              game.updatedAt = new Date().toISOString();
+              saveGames(games);
+              renderTables();
+            }
+          }
+        }
+      } else if (!hasMoved && draggedHintIndex !== -1) {
+        openHintModal(teamType, draggedHintIndex);
       }
-      hintCells.forEach(c => c.classList.remove('drag-over'));
+
+      draggedCell.classList.remove('dragging');
+      allCells.forEach(c => c.classList.remove('drag-over'));
       draggedCell = null;
       draggedHintIndex = -1;
       isDragging = false;
+      hasMoved = false;
+      cell.releasePointerCapture(e.pointerId);
+    });
+
+    cell.addEventListener('pointercancel', (e) => {
+      if (draggedCell) {
+        draggedCell.classList.remove('dragging');
+        allCells.forEach(c => c.classList.remove('drag-over'));
+      }
+      draggedCell = null;
+      draggedHintIndex = -1;
+      isDragging = false;
+      hasMoved = false;
     });
   });
 }
@@ -538,13 +582,10 @@ function setupDragAndDrop(teamType) {
 function calculateAnswer(positions) {
   if (!positions || positions.length < 3) return '-';
   
-  // Create array where index = position-1, value = hint index + 1
-  const answer = ['', '', ''];
-  positions.forEach((pos, hintIndex) => {
-    if (pos >= 1 && pos <= 3 && hintIndex < 3) {
-      answer[pos - 1] = (hintIndex + 1).toString();
-    }
-  });
+  // Answer is 3 digits representing which column each hint (1, 2, 3) is at
+  // positions[hintIndex] = column number (1-4) where that hint is placed
+  // digit 1 = column of hint1, digit 2 = column of hint2, digit 3 = column of hint3
+  const answer = positions.slice(0, 3).map(pos => pos.toString());
   
   const result = answer.join('');
   return result || '-';
@@ -586,7 +627,7 @@ function finalizeRound(teamType) {
   team.rounds.push(roundData);
 
   // Reset current round
-  team.current = { hints: ['', '', ''], positions: [1, 2, 3] };
+  team.current = { hints: ['', '', '', ''], positions: [1, 2, 3, 4] };
 
   // Increment round
   game.currentRound = (game.currentRound || 1) + 1;
@@ -653,15 +694,17 @@ function setupEditRoundModal() {
       round.answer = answer;
 
       // Recalculate positions from answer
+      // Answer: digit i = column where hint (i+1) is placed
       const positions = [];
       for (let i = 0; i < 3; i++) {
         const digit = answer[i];
-        if (digit >= '1' && digit <= '3') {
+        if (digit >= '1' && digit <= '4') {
           positions.push(parseInt(digit));
         } else {
           positions.push(i + 1);
         }
       }
+      positions.push(4); // placeholder for positions array length
       round.positions = positions;
 
       game.updatedAt = new Date().toISOString();
@@ -716,7 +759,7 @@ function setupHintModal() {
     const positionIndex = parseInt(document.getElementById('hintPositionIndex').value);
     const hintWord = document.getElementById('hintWord').value.trim();
 
-    if (isNaN(positionIndex) || positionIndex < 0 || positionIndex > 2) {
+    if (isNaN(positionIndex) || positionIndex < 0 || positionIndex > 3) {
       closeModal();
       return;
     }

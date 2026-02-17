@@ -631,7 +631,7 @@ form {
 }
 
 .col-hint {
-  min-width: 60px;
+  width: 25%;
 }
 
 .col-ans {
@@ -729,6 +729,26 @@ form {
 .hint-cell.drag-over {
   background: rgba(8, 145, 178, 0.25);
   border: 2px dashed var(--primary);
+}
+
+.drop-cell {
+  min-height: 50px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.drop-cell.drag-over {
+  background: rgba(8, 145, 178, 0.25);
+  border: 2px dashed var(--primary);
+}
+
+.empty-cell {
+  min-height: 50px;
+  cursor: pointer;
+}
+
+.empty-cell:hover {
+  background: rgba(8, 145, 178, 0.1);
 }
 
 /* Answer Display */
