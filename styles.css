@@ -136,11 +136,6 @@ body {
   gap: 12px;
 }
 
-.game-card-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .btn-icon-sm {
   width: 36px;
   height: 36px;
