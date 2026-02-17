@@ -147,12 +147,10 @@ function setupBatchActions() {
     
     if (ids.length === 0) return;
     
-    if (confirm(`Delete ${ids.length} game(s)?`)) {
-      const games = getGames();
-      ids.forEach(id => delete games[id]);
-      saveGames(games);
-      renderGamesList();
-    }
+    const games = getGames();
+    ids.forEach(id => delete games[id]);
+    saveGames(games);
+    renderGamesList();
   });
 }
 

@@ -211,17 +211,20 @@ body {
 .batch-actions {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20px;
+  right: 20px;
   background: var(--text);
   color: white;
   padding: 12px 20px;
   border-radius: var(--radius);
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
   box-shadow: var(--shadow-lg);
   z-index: 100;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 /* Buttons */
