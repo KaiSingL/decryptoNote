@@ -216,7 +216,6 @@ function initGamePage() {
 
   // Setup UI
   document.getElementById('gameNameDisplay').textContent = game.name;
-  document.getElementById('roundCounter').textContent = `Round ${game.currentRound || 1}`;
   
   // Setup back button
   document.getElementById('backBtn').addEventListener('click', () => {
@@ -359,7 +358,7 @@ function renderTeamTable(teamType, teamData) {
 
   html += `
     <tr class="current-row" data-team="${teamType}">
-      <td>Current</td>
+      <td>${rounds.length + 1}</td>
       <td class="hint-col" data-col="0">
         ${renderHintCell(0, currentHints[0], teamType)}
       </td>
@@ -555,7 +554,6 @@ function finalizeRound(teamType) {
   saveGames(games);
 
   // Update UI
-  document.getElementById('roundCounter').textContent = `Round ${game.currentRound}`;
   renderTables();
 }
 
