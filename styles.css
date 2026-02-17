@@ -717,7 +717,7 @@ form {
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
   max-width: 100%;
 }
 
@@ -732,13 +732,6 @@ form {
 
 .hint-cell.drag-over {
   background: rgba(8, 145, 178, 0.2);
-}
-
-/* Current Row */
-.current-row-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 600;
 }
 
 /* Answer Display */

@@ -222,16 +222,6 @@ function initGamePage() {
     window.location.href = 'index.html';
   });
 
-  // Setup delete game
-  document.getElementById('deleteGameBtn').addEventListener('click', () => {
-    if (confirm('Delete this game?')) {
-      const games = getGames();
-      delete games[currentGameId];
-      saveGames(games);
-      window.location.href = 'index.html';
-    }
-  });
-
   // Setup editable name
   document.getElementById('gameNameDisplay').addEventListener('click', () => {
     const newName = prompt('Enter game name:', game.name);
@@ -360,16 +350,15 @@ function renderTeamTable(teamType, teamData) {
     <tr class="current-row" data-team="${teamType}">
       <td>${rounds.length + 1}</td>
       <td class="hint-col" data-col="0">
-        ${renderHintCell(0, currentHints[0], teamType)}
+        ${renderHintCell(0, currentHints[0], currentPositions, teamType)}
       </td>
       <td class="hint-col" data-col="1">
-        ${renderHintCell(1, currentHints[1], teamType)}
+        ${renderHintCell(1, currentHints[1], currentPositions, teamType)}
       </td>
       <td class="hint-col" data-col="2">
-        ${renderHintCell(2, currentHints[2], teamType)}
+        ${renderHintCell(2, currentHints[2], currentPositions, teamType)}
       </td>
       <td class="hint-col" data-col="3">
-        <span class="current-row-hint">4</span>
       </td>
       <td><strong>${calculateAnswer(currentPositions)}</strong></td>
     </tr>
@@ -385,12 +374,13 @@ function renderTeamTable(teamType, teamData) {
   setupHintCellClicks(teamType);
 }
 
-function renderHintCell(hintIndex, hintValue, teamType) {
+function renderHintCell(hintIndex, hintValue, positions, teamType) {
   const hintNum = hintIndex + 1;
   const hasHint = hintValue && hintValue.trim().length > 0;
+  const colHintNum = positions && positions[hintIndex] ? positions[hintIndex] : hintNum;
   return `
     <div class="hint-cell" data-hint-index="${hintIndex}" data-team="${teamType}">
-      <span class="hint-number">${hintNum}</span>
+      <span class="hint-number">${colHintNum}</span>
       <span class="hint-text ${hasHint ? '' : 'empty'}" data-hint-index="${hintIndex}" data-team="${teamType}">
         ${hasHint ? escapeHtml(hintValue) : 'Tap to add'}
       </span>
