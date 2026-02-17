@@ -2,8 +2,8 @@
   --primary: #0891B2;
   --primary-light: #22D3EE;
   --primary-dark: #164E63;
-  --cta: #059669;
-  --cta-hover: #047857;
+  --cta: #0891B2;
+  --cta-hover: #164E63;
   --bg: #ECFEFF;
   --bg-card: #FFFFFF;
   --text: #164E63;
@@ -11,6 +11,8 @@
   --border: #CBD5E1;
   --danger: #DC2626;
   --danger-light: #FEE2E2;
+  --opponent: #683cb6;
+  --opponent-light: #EDE9FE;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --radius: 12px;
@@ -255,6 +257,22 @@ body {
 
 .btn-primary:hover {
   background: var(--cta-hover);
+}
+
+#ownTeamTab .btn-primary {
+  background: var(--primary);
+}
+
+#ownTeamTab .btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+#opponentTeamTab .btn-primary {
+  background: var(--opponent);
+}
+
+#opponentTeamTab .btn-primary:hover {
+  background: #6D28D9;
 }
 
 .btn-secondary {
@@ -524,6 +542,14 @@ form {
   border-radius: 3px 3px 0 0;
 }
 
+.tab-btn[data-tab="opponentTeam"].active {
+  color: var(--opponent);
+}
+
+.tab-btn[data-tab="opponentTeam"].active::after {
+  background: var(--opponent);
+}
+
 /* Game Content */
 .game-content {
   flex: 1;
@@ -558,6 +584,14 @@ form {
   font-weight: 700;
   color: var(--text-muted);
   margin-bottom: 12px;
+}
+
+#opponentTeamTab .term-guess-section {
+  background: var(--opponent-light);
+}
+
+#opponentTeamTab .term-guess-section h3 {
+  color: var(--opponent);
 }
 
 .term-guess-inputs {
@@ -658,6 +692,18 @@ form {
 
 .game-table tbody tr.current-row:hover {
   background: rgba(8, 145, 178, 0.15);
+}
+
+#opponentTeamTable th {
+  background: var(--opponent);
+}
+
+#opponentTeamTab .game-table tbody tr.current-row {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+#opponentTeamTab .game-table tbody tr.current-row:hover {
+  background: rgba(124, 58, 237, 0.15);
 }
 
 .game-table tbody tr:last-child td {
@@ -778,6 +824,11 @@ form {
   background: var(--bg);
   padding: 8px 24px;
   border-radius: var(--radius-sm);
+}
+
+#opponentTeamTab .answer-code {
+  color: var(--opponent);
+  background: var(--opponent-light);
 }
 
 .current-round-area .btn-primary {
