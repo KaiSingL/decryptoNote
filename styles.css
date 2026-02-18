@@ -714,6 +714,14 @@ form {
   white-space: nowrap;
 }
 
+.answer-duplicate {
+  color: var(--danger);
+}
+
+.answer-duplicate strong {
+  color: var(--danger);
+}
+
 /* Table Row */
 .game-table tbody tr {
   transition: background var(--transition);

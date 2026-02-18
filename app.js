@@ -374,6 +374,9 @@ function renderTeamTable(teamType, teamData) {
     const positions = round.positions || [1, 2, 3, 4];
     const answer = calculateAnswer(positions);
     
+    const previousAnswers = rounds.slice(0, index).map(r => r.answer);
+    const isDuplicate = previousAnswers.includes(answer);
+    
     const hintAtColumn = [null, null, null, null];
     for (let hintIdx = 0; hintIdx < 3; hintIdx++) {
       const col = positions[hintIdx];
@@ -397,7 +400,7 @@ function renderTeamTable(teamType, teamData) {
         <td class="hint-col drop-cell" data-col-index="3" data-hint-index="${hintAtColumn[3]?.hintIndex ?? -1}">
           ${renderHintCellFromColumn(3, hintAtColumn[3], teamType, index)}
         </td>
-        <td class="answer-cell"><strong>${escapeHtml(answer)}</strong></td>
+        <td class="answer-cell ${isDuplicate ? 'answer-duplicate' : ''}"><strong>${escapeHtml(answer)}</strong></td>
       </tr>
     `;
   });
@@ -408,6 +411,10 @@ function renderTeamTable(teamType, teamData) {
   const currentHints = current.hints || ['', '', '', ''];
   const currentPositions = current.positions || [1, 2, 3, 4];
   const currentRoundNum = teamData.currentRound || rounds.length + 1;
+
+  const currentAnswer = calculateAnswer(currentPositions);
+  const allCompletedAnswers = rounds.map(r => r.answer);
+  const isCurrentDuplicate = allCompletedAnswers.includes(currentAnswer);
 
   // Render 4 columns with hints positioned accordingly
   // Find which hint is at each column (1-4)
@@ -434,7 +441,7 @@ function renderTeamTable(teamType, teamData) {
       <td class="hint-col drop-cell" data-col-index="3" data-hint-index="${hintAtColumn[3]?.hintIndex ?? -1}">
         ${renderHintCellFromColumn(3, hintAtColumn[3], teamType)}
       </td>
-      <td><strong>${calculateAnswer(currentPositions)}</strong></td>
+      <td class="answer-cell ${isCurrentDuplicate ? 'answer-duplicate' : ''}"><strong>${currentAnswer}</strong></td>
     </tr>
   `;
 
