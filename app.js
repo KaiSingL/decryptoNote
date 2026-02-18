@@ -884,7 +884,7 @@ function openHintModal(teamType, positionIndex, roundIndex = null) {
   setTimeout(() => {
     const input = document.getElementById('hintWord');
     input.focus();
-    input.select();
+    input.setSelectionRange(input.value.length, input.value.length);
   }, 50);
 }
 
