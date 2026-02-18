@@ -183,7 +183,7 @@ function escapeHtml(text) {
 Hint 1 - 3 means the first, second, third digit.
 In the current row, hints 1-3 can be positioned in columns 1-4. Users can:
 - Move hints around by dragging (hint swaps position with target column)
-- Double-click to open edit modal to enter hint text
+- Click/tap to open edit modal to enter hint text
 - Position a hint in column 4 (extra hint position)
 
 ### Data Structure
