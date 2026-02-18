@@ -497,28 +497,46 @@ function setupDragAndDrop(teamType) {
     
     let draggedCell = null;
     let draggedHintIndex = -1;
+    let draggedColIndex = -1;
+    let pointerId = null;
     let startX = 0;
     let startY = 0;
     let isDragging = false;
     let hasMoved = false;
+
+    const cleanupDragState = () => {
+      if (draggedCell) {
+        draggedCell.classList.remove('dragging');
+      }
+      allCells.forEach(c => c.classList.remove('drag-over'));
+      draggedCell = null;
+      draggedHintIndex = -1;
+      draggedColIndex = -1;
+      pointerId = null;
+      isDragging = false;
+      hasMoved = false;
+    };
 
     allCells.forEach((cell) => {
       const hintIndex = cell.dataset.hintIndex !== undefined ? parseInt(cell.dataset.hintIndex) : -1;
       const colIndex = parseInt(cell.dataset.colIndex);
 
       cell.addEventListener('pointerdown', (e) => {
+        if (hintIndex === -1) return;
         e.preventDefault();
         startX = e.clientX;
         startY = e.clientY;
         draggedCell = cell;
         draggedHintIndex = hintIndex;
+        draggedColIndex = colIndex;
+        pointerId = e.pointerId;
         isDragging = false;
         hasMoved = false;
         cell.setPointerCapture(e.pointerId);
       });
 
       cell.addEventListener('pointermove', (e) => {
-        if (!draggedCell || draggedCell !== cell) return;
+        if (!draggedCell || draggedCell !== cell || pointerId === null) return;
         
         const dx = Math.abs(e.clientX - startX);
         const dy = Math.abs(e.clientY - startY);
@@ -530,11 +548,13 @@ function setupDragAndDrop(teamType) {
         }
 
         if (isDragging) {
+          const x = e.clientX;
+          const y = e.clientY;
           allCells.forEach(c => {
             if (c !== draggedCell) {
               const rect = c.getBoundingClientRect();
-              if (e.clientX >= rect.left && e.clientX <= rect.right &&
-                  e.clientY >= rect.top && e.clientY <= rect.bottom) {
+              if (x >= rect.left && x <= rect.right &&
+                  y >= rect.top && y <= rect.bottom) {
                 c.classList.add('drag-over');
               } else {
                 c.classList.remove('drag-over');
@@ -545,9 +565,18 @@ function setupDragAndDrop(teamType) {
       });
 
       cell.addEventListener('pointerup', (e) => {
-        if (!draggedCell || draggedCell !== cell) return;
+        if (!draggedCell || draggedCell !== cell || pointerId === null) return;
+        const currentPointerId = pointerId;
+        const currentHintIndex = draggedHintIndex;
+        const currentColIndex = draggedColIndex;
+        const wasDragging = isDragging;
+        const didMove = hasMoved;
 
-        if (isDragging && hasMoved && draggedHintIndex !== -1) {
+        try {
+          cell.releasePointerCapture(currentPointerId);
+        } catch (err) {}
+
+        if (wasDragging && didMove && currentHintIndex !== -1) {
           const targetCell = Array.from(allCells).find(c => {
             if (c === draggedCell) return false;
             const rect = c.getBoundingClientRect();
@@ -558,8 +587,10 @@ function setupDragAndDrop(teamType) {
           if (targetCell) {
             const targetColIndex = parseInt(targetCell.dataset.colIndex);
             
-            if (!isNaN(targetColIndex) && !isNaN(colIndex) &&
-                targetColIndex !== colIndex) {
+            if (!isNaN(targetColIndex) && !isNaN(currentColIndex) &&
+                targetColIndex !== currentColIndex) {
+              
+              cleanupDragState();
               
               const games = getGames();
               const game = games[currentGameId];
@@ -573,14 +604,14 @@ function setupDragAndDrop(teamType) {
                   positions = [...(team.current.positions || [1, 2, 3, 4])];
                 }
                 
-                const sourcePosition = colIndex + 1;
+                const sourcePosition = currentColIndex + 1;
                 const targetPosition = targetColIndex + 1;
                 
                 const hintAtTargetCol = positions.indexOf(targetPosition);
                 
-                positions[draggedHintIndex] = targetPosition;
+                positions[currentHintIndex] = targetPosition;
                 
-                if (hintAtTargetCol !== -1 && hintAtTargetCol !== draggedHintIndex && hintAtTargetCol < 3) {
+                if (hintAtTargetCol !== -1 && hintAtTargetCol !== currentHintIndex && hintAtTargetCol < 3) {
                   positions[hintAtTargetCol] = sourcePosition;
                 }
                 
@@ -595,39 +626,29 @@ function setupDragAndDrop(teamType) {
                 saveGames(games);
                 renderTables();
               }
+              return;
             }
           }
-        } else if (!hasMoved && draggedHintIndex !== -1) {
-          cell.releasePointerCapture(e.pointerId);
-          draggedCell.classList.remove('dragging');
-          allCells.forEach(c => c.classList.remove('drag-over'));
-          const hintIndex = draggedHintIndex;
-          draggedCell = null;
-          draggedHintIndex = -1;
-          isDragging = false;
-          hasMoved = false;
-          openHintModal(teamType, hintIndex, roundIndex);
-          return;
         }
 
-        draggedCell.classList.remove('dragging');
-        allCells.forEach(c => c.classList.remove('drag-over'));
-        draggedCell = null;
-        draggedHintIndex = -1;
-        isDragging = false;
-        hasMoved = false;
-        cell.releasePointerCapture(e.pointerId);
+        cleanupDragState();
+        
+        if (!didMove && currentHintIndex !== -1) {
+          openHintModal(teamType, currentHintIndex, roundIndex);
+        }
       });
 
       cell.addEventListener('pointercancel', (e) => {
-        if (draggedCell) {
-          draggedCell.classList.remove('dragging');
-          allCells.forEach(c => c.classList.remove('drag-over'));
+        if (pointerId !== null && draggedCell) {
+          try {
+            draggedCell.releasePointerCapture(pointerId);
+          } catch (err) {}
         }
-        draggedCell = null;
-        draggedHintIndex = -1;
-        isDragging = false;
-        hasMoved = false;
+        cleanupDragState();
+      });
+
+      cell.addEventListener('lostpointercapture', (e) => {
+        cleanupDragState();
       });
     });
   });
