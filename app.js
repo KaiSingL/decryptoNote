@@ -581,7 +581,16 @@ function setupDragAndDrop(teamType) {
             }
           }
         } else if (!hasMoved && draggedHintIndex !== -1) {
-          openHintModal(teamType, draggedHintIndex, roundIndex);
+          cell.releasePointerCapture(e.pointerId);
+          draggedCell.classList.remove('dragging');
+          allCells.forEach(c => c.classList.remove('drag-over'));
+          const hintIndex = draggedHintIndex;
+          draggedCell = null;
+          draggedHintIndex = -1;
+          isDragging = false;
+          hasMoved = false;
+          openHintModal(teamType, hintIndex, roundIndex);
+          return;
         }
 
         draggedCell.classList.remove('dragging');
@@ -834,7 +843,11 @@ function openHintModal(teamType, positionIndex, roundIndex = null) {
   document.getElementById('hintWord').value = currentHint;
 
   document.getElementById('hintModal').classList.remove('hidden');
-  document.getElementById('hintWord').focus();
+  setTimeout(() => {
+    const input = document.getElementById('hintWord');
+    input.focus();
+    input.select();
+  }, 50);
 }
 
 // ================= UTILITIES =================
