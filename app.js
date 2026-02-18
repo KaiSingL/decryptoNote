@@ -3,12 +3,22 @@
 const STORAGE_KEY = 'decrypto_notes';
 
 function getGames() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : {};
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    console.error('Failed to parse games:', e);
+    return {};
+  }
 }
 
 function saveGames(games) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+  } catch (e) {
+    console.error('Failed to save games:', e);
+    alert('Failed to save. Storage may be full.');
+  }
 }
 
 function generateId() {
@@ -635,8 +645,8 @@ function finalizeRound(teamType) {
 
   const team = game[teamType];
   const current = team.current;
-  const hints = current.hints || ['', '', ''];
-  const positions = current.positions || [1, 2, 3];
+  const hints = current.hints || ['', '', '', ''];
+  const positions = current.positions || [1, 2, 3, 4];
 
   // Check if all hints are filled
   const hasAllHints = hints.slice(0, 3).every(h => h.trim());
