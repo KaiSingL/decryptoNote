@@ -29,7 +29,6 @@ function generateId() {
 
 function initLandingPage() {
   renderGamesList();
-  setupEditModal();
   setupBatchActions();
 }
 
@@ -102,45 +101,6 @@ function renderGamesList() {
   updateBatchActions();
 }
 
-function setupEditModal() {
-  const modal = document.getElementById('editModal');
-  const form = document.getElementById('editGameForm');
-  const cancelBtn = document.getElementById('cancelEditBtn');
-  const backdrop = modal.querySelector('.modal-backdrop');
-  const closeBtn = modal.querySelector('.modal-close');
-
-  const closeModal = () => {
-    modal.classList.add('hidden');
-    form.reset();
-  };
-
-  cancelBtn.addEventListener('click', closeModal);
-  closeBtn.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const id = document.getElementById('editGameId').value;
-    const name = document.getElementById('editGameName').value.trim();
-    
-    const games = getGames();
-    if (games[id]) {
-      games[id].name = name || 'Game';
-      games[id].updatedAt = new Date().toISOString();
-      saveGames(games);
-    }
-    
-    closeModal();
-    renderGamesList();
-    
-    // Update current page if on game page
-    if (window.location.pathname.includes('game.html')) {
-      document.getElementById('gameNameDisplay').textContent = name || 'Game';
-    }
-  });
-}
-
 function setupBatchActions() {
   const gamesList = document.getElementById('gamesList');
   const selectedCount = document.getElementById('selectedCount');
@@ -180,16 +140,6 @@ function updateBatchActions() {
 
 function openGame(id) {
   window.location.href = `game.html?id=${id}`;
-}
-
-function editGame(id) {
-  const games = getGames();
-  const game = games[id];
-  if (!game) return;
-
-  document.getElementById('editGameId').value = id;
-  document.getElementById('editGameName').value = game.name;
-  document.getElementById('editModal').classList.remove('hidden');
 }
 
 function deleteGame(id) {
@@ -259,9 +209,6 @@ function initGamePage() {
   // Setup finalize buttons
   document.getElementById('ownTeamFinalizeBtn').addEventListener('click', () => finalizeRound('ownTeam'));
   document.getElementById('opponentTeamFinalizeBtn').addEventListener('click', () => finalizeRound('opponentTeam'));
-
-  // Setup edit round modal
-  setupEditRoundModal();
 
   // Setup hint input modal
   setupHintModal();
@@ -712,101 +659,6 @@ function finalizeRound(teamType) {
 
   // Update UI
   renderTables();
-}
-
-// ================= EDIT ROUND MODAL =================
-
-function setupEditRoundModal() {
-  const modal = document.getElementById('editRoundModal');
-  const form = document.getElementById('editRoundForm');
-  const cancelBtn = document.getElementById('cancelEditRoundBtn');
-  const deleteBtn = document.getElementById('deleteRoundBtn');
-  const backdrop = modal.querySelector('.modal-backdrop');
-  const closeBtn = modal.querySelector('.modal-close');
-
-  const closeModal = () => {
-    modal.classList.add('hidden');
-    form.reset();
-  };
-
-  cancelBtn.addEventListener('click', closeModal);
-  closeBtn.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
-
-  deleteBtn.addEventListener('click', () => {
-    const teamType = document.getElementById('editTeamType').value;
-    const roundIndex = parseInt(document.getElementById('editRoundIndex').value);
-
-    if (confirm('Delete this round?')) {
-      const games = getGames();
-      const game = games[currentGameId];
-      if (game) {
-        game[teamType].rounds.splice(roundIndex, 1);
-        game.updatedAt = new Date().toISOString();
-        saveGames(games);
-        renderTables();
-      }
-      closeModal();
-    }
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const teamType = document.getElementById('editTeamType').value;
-    const roundIndex = parseInt(document.getElementById('editRoundIndex').value);
-    const hint1 = document.getElementById('editHint1').value.trim();
-    const hint2 = document.getElementById('editHint2').value.trim();
-    const hint3 = document.getElementById('editHint3').value.trim();
-    const answer = document.getElementById('editAnswer').value.trim();
-
-    const games = getGames();
-    const game = games[currentGameId];
-    
-    if (game && game[teamType].rounds[roundIndex]) {
-      const round = game[teamType].rounds[roundIndex];
-      round.hints = [hint1, hint2, hint3];
-      round.answer = answer;
-
-      // Recalculate positions from answer
-      // Answer: digit i = column where hint (i+1) is placed
-      const positions = [];
-      for (let i = 0; i < 3; i++) {
-        const digit = answer[i];
-        if (digit >= '1' && digit <= '4') {
-          positions.push(parseInt(digit));
-        } else {
-          positions.push(i + 1);
-        }
-      }
-      positions.push(4); // placeholder for positions array length
-      round.positions = positions;
-
-      game.updatedAt = new Date().toISOString();
-      saveGames(games);
-      renderTables();
-    }
-
-    closeModal();
-  });
-}
-
-function openEditRound(teamType, roundIndex) {
-  const games = getGames();
-  const game = games[currentGameId];
-  if (!game) return;
-
-  const round = game[teamType].rounds[roundIndex];
-  if (!round) return;
-
-  document.getElementById('editTeamType').value = teamType;
-  document.getElementById('editRoundIndex').value = roundIndex;
-  document.getElementById('editHint1').value = round.hints[0] || '';
-  document.getElementById('editHint2').value = round.hints[1] || '';
-  document.getElementById('editHint3').value = round.hints[2] || '';
-  document.getElementById('editAnswer').value = round.answer || '';
-
-  document.getElementById('editRoundModal').classList.remove('hidden');
 }
 
 // ================= HINT INPUT MODAL =================
