@@ -587,11 +587,42 @@ form {
   box-shadow: var(--shadow);
 }
 
-.term-guess-section h3 {
+.term-guess-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.term-guess-header h3 {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin: 0;
+}
+
+.term-guess-header .chevron-icon {
+  transition: transform 0.2s ease;
+  color: var(--text-muted);
+}
+
+.term-guess-section:not(.collapsed) .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.term-guess-content {
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+  max-height: 300px;
+}
+
+.term-guess-section.collapsed .term-guess-content {
+  max-height: 0;
+}
+
+.term-guess-content .term-guess-inputs {
+  padding-top: 12px;
 }
 
 #opponentTeamTab .term-guess-section {

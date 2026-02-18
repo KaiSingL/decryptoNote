@@ -238,6 +238,14 @@ function initGamePage() {
   // Setup opponent term guess inputs
   setupOpponentTermInputs();
 
+  // Setup collapsible term guess section
+  const termGuessHeader = document.querySelector('.term-guess-header');
+  if (termGuessHeader) {
+    termGuessHeader.addEventListener('click', () => {
+      termGuessHeader.parentElement.classList.toggle('collapsed');
+    });
+  }
+
   // Setup finalize buttons
   document.getElementById('ownTeamFinalizeBtn').addEventListener('click', () => finalizeRound('ownTeam'));
   document.getElementById('opponentTeamFinalizeBtn').addEventListener('click', () => finalizeRound('opponentTeam'));
