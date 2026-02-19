@@ -34,7 +34,7 @@
   <meta name="twitter:description" content="Track and manage your Decrypto game rounds">
   <meta name="twitter:image" content="https://kaisingl.github.io/decryptoNote/icons/icon-512x512.png">
 
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -70,14 +70,14 @@
         </div>
 
         <div id="batchActions" class="batch-actions hidden">
-          <span id="selectedCount">0 selected</span>
-          <button id="deleteSelectedBtn" class="btn btn-danger btn-sm">Delete</button>
+          <span id="selectedCount" aria-live="polite">0 selected</span>
+          <button id="deleteSelectedBtn" class="btn btn-danger btn-sm" aria-label="Delete selected games">Delete</button>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=3"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initLandingPage();

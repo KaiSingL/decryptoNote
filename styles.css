@@ -496,9 +496,6 @@ form {
   color: var(--primary);
 }
 
-/* Round Badge (unused - kept for reference) */
-/* .round-badge { */
-
 /* Tab Bar */
 .tab-bar {
   background: var(--bg-card);
@@ -727,6 +724,7 @@ form {
   transition: background var(--transition);
   user-select: none;
   -webkit-user-select: none;
+  contain: content;
 }
 
 .game-table tbody tr:hover {
@@ -919,4 +917,20 @@ form {
 
 .modal-content {
   animation: fadeIn 0.2s ease;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .game-card,
+  .modal-content {
+    animation: none;
+  }
 }

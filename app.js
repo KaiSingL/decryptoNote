@@ -1,24 +1,132 @@
-// ================= LOCAL STORAGE =================
+// ================= CONSTANTS =================
 
 const STORAGE_KEY = 'decrypto_notes';
+const DATA_VERSION = 1;
+const MIN_HINT_LENGTH = 1;
+const MAX_HINT_LENGTH = 50;
+const MAX_GAME_NAME_LENGTH = 100;
+const MIN_POSITION = 1;
+const MAX_POSITION = 4;
+const CACHE_TTL = 1000;
+
+// ================= CACHE LAYER =================
+
+let gamesCache = null;
+let cacheTimestamp = 0;
+
+function invalidateCache() {
+  gamesCache = null;
+  cacheTimestamp = 0;
+}
+
+function debounce(fn, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// ================= LOCAL STORAGE =================
+
+function isStorageAvailable() {
+  try {
+    const test = '__storage_test__';
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 function getGames() {
+  const now = Date.now();
+  if (gamesCache && (now - cacheTimestamp) < CACHE_TTL) {
+    return gamesCache;
+  }
+  
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : {};
+    if (!data) {
+      gamesCache = {};
+      cacheTimestamp = now;
+      return {};
+    }
+    
+    const parsed = JSON.parse(data);
+    const migrated = migrateData(parsed);
+    gamesCache = migrated;
+    cacheTimestamp = now;
+    return migrated;
   } catch (e) {
     console.error('Failed to parse games:', e);
+    gamesCache = {};
+    cacheTimestamp = now;
     return {};
   }
 }
 
 function saveGames(games) {
+  if (!isStorageAvailable()) {
+    alert('Storage is not available. Please enable localStorage.');
+    return false;
+  }
+  
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+    const serialized = JSON.stringify(games);
+    const dataSize = new Blob([serialized]).size;
+    
+    if (dataSize > 5 * 1024 * 1024) {
+      alert('Storage quota exceeded. Please delete some games.');
+      return false;
+    }
+    
+    localStorage.setItem(STORAGE_KEY, serialized);
+    invalidateCache();
+    return true;
   } catch (e) {
     console.error('Failed to save games:', e);
-    alert('Failed to save. Storage may be full.');
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      alert('Storage full. Please delete some games to free up space.');
+    } else {
+      alert('Failed to save. Please try again.');
+    }
+    return false;
   }
+}
+
+function migrateData(data) {
+  if (!data || typeof data !== 'object') return {};
+  
+  const version = data._version || 0;
+  if (version >= DATA_VERSION) return data;
+  
+  let migrated = { ...data };
+  
+  if (version < 1) {
+    Object.keys(migrated).forEach(key => {
+      if (key === '_version') return;
+      const game = migrated[key];
+      if (game && typeof game === 'object') {
+        if (!game.ownTeam) {
+          game.ownTeam = { rounds: [], currentRound: 1, current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] } };
+        }
+        if (!game.opponentTeam) {
+          game.opponentTeam = { guessedTerms: ['', '', '', ''], rounds: [], currentRound: 1, current: { hints: ['', '', '', ''], positions: [1, 2, 3, 4] } };
+        }
+        if (!game.createdAt || isNaN(new Date(game.createdAt).getTime())) {
+          game.createdAt = new Date().toISOString();
+        }
+        if (!game.updatedAt || isNaN(new Date(game.updatedAt).getTime())) {
+          game.updatedAt = game.createdAt;
+        }
+      }
+    });
+  }
+  
+  migrated._version = DATA_VERSION;
+  return migrated;
 }
 
 function generateId() {
@@ -67,9 +175,11 @@ function renderGamesList() {
   const emptyState = document.getElementById('emptyState');
   const batchActions = document.getElementById('batchActions');
 
-  const gamesArray = Object.values(games).sort((a, b) => 
-    new Date(b.updatedAt) - new Date(a.updatedAt)
-  );
+  const gamesArray = Object.values(games).filter(g => g && g.id).sort((a, b) => {
+    const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+    const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+    return dateB - dateA;
+  });
 
   if (gamesArray.length === 0) {
     gamesList.innerHTML = '';
@@ -81,13 +191,15 @@ function renderGamesList() {
   emptyState.classList.add('hidden');
   
   gamesList.innerHTML = gamesArray.map(game => {
-    const date = new Date(game.createdAt);
-    const createdDate = date.toISOString().split('T')[0];
+    const date = game.createdAt ? new Date(game.createdAt) : null;
+    const createdDate = date && !isNaN(date.getTime()) 
+      ? date.toISOString().split('T')[0] 
+      : 'Unknown';
     
     return `
       <div class="game-card" data-id="${game.id}">
-        <input type="checkbox" class="game-card-checkbox" data-id="${game.id}">
-        <div class="game-card-info" onclick="openGame('${game.id}')">
+        <input type="checkbox" class="game-card-checkbox" data-id="${game.id}" aria-label="Select ${escapeHtml(game.name)}">
+        <div class="game-card-info" onclick="openGame('${game.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openGame('${game.id}')">
           <div class="game-card-name">${escapeHtml(game.name)}</div>
           <div class="game-card-meta">
             <span>${createdDate}</span>
@@ -181,11 +293,12 @@ function initGamePage() {
     window.location.href = 'index.html';
   });
 
-  // Setup editable name
+  // Setup editable name with validation
   document.getElementById('gameNameDisplay').addEventListener('click', () => {
     const newName = prompt('Enter game name:', game.name);
     if (newName && newName.trim()) {
-      game.name = newName.trim();
+      const trimmedName = newName.trim().substring(0, MAX_GAME_NAME_LENGTH);
+      game.name = trimmedName;
       game.updatedAt = new Date().toISOString();
       saveGames(games);
       document.getElementById('gameNameDisplay').textContent = game.name;
@@ -228,8 +341,12 @@ function setupTabs() {
       const tab = btn.dataset.tab;
       currentTab = tab;
       
-      tabBtns.forEach(b => b.classList.remove('active'));
+      tabBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       
       document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
@@ -247,15 +364,19 @@ function setupOpponentTermInputs() {
 
   const guessedTerms = game.opponentTeam.guessedTerms || ['', '', '', ''];
   
+  const debouncedSave = debounce((updatedGames) => {
+    saveGames(updatedGames);
+  }, 300);
+  
   for (let i = 0; i < 4; i++) {
     const input = document.getElementById(`opponentTerm${i + 1}`);
     if (input) {
       input.value = guessedTerms[i] || '';
       
       input.addEventListener('input', () => {
-        game.opponentTeam.guessedTerms[i] = input.value;
+        game.opponentTeam.guessedTerms[i] = input.value.substring(0, MAX_HINT_LENGTH);
         game.updatedAt = new Date().toISOString();
-        saveGames(games);
+        debouncedSave(games);
       });
     }
   }
@@ -401,18 +522,6 @@ function renderTeamTable(teamType, teamData) {
   setupDragAndDrop(teamType);
 }
 
-function renderHintCell(hintIndex, hintValue, positionNum, teamType) {
-  const hasHint = hintValue && hintValue.trim().length > 0;
-  return `
-    <div class="hint-cell" data-hint-index="${hintIndex}" data-col-index="${hintIndex}" data-position="${positionNum}" data-team="${teamType}">
-      <span class="hint-number">${positionNum || ''}</span>
-      <span class="hint-text ${hasHint ? '' : 'empty'}">
-        ${hasHint ? escapeHtml(hintValue) : 'Tap to Edit'}
-      </span>
-    </div>
-  `;
-}
-
 function renderHintCellFromColumn(colIndex, hintData, teamType, roundIndex = null) {
   const roundAttr = roundIndex !== null ? ` data-round-index="${roundIndex}"` : '';
   
@@ -436,6 +545,8 @@ function renderHintCellFromColumn(colIndex, hintData, teamType, roundIndex = nul
 
 function setupDragAndDrop(teamType) {
   const tbody = document.getElementById(`${teamType}Body`);
+  if (!tbody) return;
+  
   const rows = tbody.querySelectorAll('.editable-row, .current-row');
   
   rows.forEach(row => {
@@ -686,7 +797,7 @@ function setupHintModal() {
     const positionIndex = parseInt(document.getElementById('hintPositionIndex').value);
     const roundIndexInput = document.getElementById('hintRoundIndex').value;
     const roundIndex = roundIndexInput !== '' ? parseInt(roundIndexInput) : null;
-    const hintWord = document.getElementById('hintWord').value.trim();
+    const hintWord = document.getElementById('hintWord').value.trim().substring(0, MAX_HINT_LENGTH);
 
     if (isNaN(positionIndex) || positionIndex < 0 || positionIndex > 3) {
       closeModal();

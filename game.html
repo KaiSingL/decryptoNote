@@ -34,7 +34,7 @@
   <meta name="twitter:description" content="Track game rounds">
   <meta name="twitter:image" content="https://kaisingl.github.io/decryptoNote/icons/icon-512x512.png">
 
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -51,18 +51,18 @@
       </div>
     </header>
 
-    <nav class="tab-bar">
-      <button class="tab-btn active" data-tab="ownTeam">
+    <nav class="tab-bar" role="tablist">
+      <button class="tab-btn active" data-tab="ownTeam" role="tab" aria-selected="true" aria-controls="ownTeamTab" id="ownTeamTabBtn">
         <span>My Team</span>
       </button>
-      <button class="tab-btn" data-tab="opponentTeam">
+      <button class="tab-btn" data-tab="opponentTeam" role="tab" aria-selected="false" aria-controls="opponentTeamTab" id="opponentTeamTabBtn">
         <span>Opponent</span>
       </button>
     </nav>
 
     <main class="game-content">
       <!-- Own Team Tab -->
-      <section id="ownTeamTab" class="tab-content active">
+      <section id="ownTeamTab" class="tab-content active" role="tabpanel" aria-labelledby="ownTeamTabBtn">
         <div class="table-container">
           <table class="game-table" id="ownTeamTable">
             <thead>
@@ -92,7 +92,7 @@
       </section>
 
       <!-- Opponent Team Tab -->
-      <section id="opponentTeamTab" class="tab-content">
+      <section id="opponentTeamTab" class="tab-content" role="tabpanel" aria-labelledby="opponentTeamTabBtn">
         <div class="term-guess-section collapsed">
           <div class="term-guess-header">
             <h3>Term Guess</h3>
@@ -150,11 +150,11 @@
   </div>
 
   <!-- Hint Input Modal -->
-  <div id="hintModal" class="modal hidden">
+  <div id="hintModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="hintModalTitle">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Enter Hint for Position <span id="hintPositionNum">1</span></h3>
+        <h3 id="hintModalTitle">Enter Hint for Position <span id="hintPositionNum">1</span></h3>
         <button class="modal-close" aria-label="Close" id="closeHintModal">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -175,7 +175,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=3"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initGamePage();
