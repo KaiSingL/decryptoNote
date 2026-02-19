@@ -573,6 +573,7 @@ form {
 .tab-content.active {
   display: block;
   opacity: 1;
+  padding-bottom: 100px;
 }
 
 /* Term Guess Section (Opponent only) */
@@ -840,10 +841,16 @@ form {
 
 /* Answer Display */
 .current-round-area {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  z-index: 100;
+  background: transparent;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 16px;
