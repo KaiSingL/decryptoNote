@@ -22,7 +22,7 @@ Then visit `http://localhost:8000`
 1. Push code to a GitHub repository
 2. Go to Settings → Pages
 3. Select `main` branch and click Save
-4. App will be live at `https://username.github.io/repo-name/`
+4. App will be live at `https://kaisingl.github.io/decryptoNote/`
 
 ### Linting
 No formal linter configured. For basic JS validation:

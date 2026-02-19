@@ -17,7 +17,7 @@
   ],
   "theme_color": "#0891B2",
   "background_color": "#ECFEFF",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/decryptoNote/",
+  "scope": "/decryptoNote/",
   "display": "standalone"
 }
