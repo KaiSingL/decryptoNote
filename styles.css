@@ -849,34 +849,6 @@ form {
   gap: 16px;
 }
 
-.answer-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.answer-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.answer-code {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: 0.2em;
-  background: var(--bg);
-  padding: 8px 24px;
-  border-radius: var(--radius-sm);
-}
-
-#opponentTeamTab .answer-code {
-  color: var(--opponent);
-  background: var(--opponent-light);
-}
-
 .current-round-area .btn-primary {
   width: 100%;
 }

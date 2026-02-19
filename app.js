@@ -390,7 +390,6 @@ function renderTables() {
 
 function renderTeamTable(teamType, teamData) {
   const tbody = document.getElementById(`${teamType}Body`);
-  const answerDisplay = document.getElementById(`${teamType}Answer`);
   
   if (!tbody) return;
 
@@ -478,9 +477,6 @@ function renderTeamTable(teamType, teamData) {
 
   tbody.innerHTML = html;
   
-  // Update answer display
-  answerDisplay.textContent = calculateAnswer(currentPositions);
-
   // Setup drag and drop and click handlers
   setupDragAndDrop(teamType);
 }
