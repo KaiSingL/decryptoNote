@@ -328,9 +328,6 @@ function initGamePage() {
 
   // Render tables
   renderTables();
-  
-  // Setup tap handlers
-  setupRoundRowTaps();
 }
 
 function setupTabs() {
@@ -389,40 +386,6 @@ function renderTables() {
 
   renderTeamTable('ownTeam', game.ownTeam);
   renderTeamTable('opponentTeam', game.opponentTeam);
-}
-
-function setupRoundRowTaps() {
-  const ownTeamBody = document.getElementById('ownTeamBody');
-  const opponentTeamBody = document.getElementById('opponentTeamBody');
-  
-  setupTapsForTable(ownTeamBody);
-  setupTapsForTable(opponentTeamBody);
-}
-
-function setupTapsForTable(tbody) {
-  if (!tbody) return;
-  
-  const rows = tbody.querySelectorAll('.completed-row');
-  let lastTapTime = 0;
-  let lastTapRow = null;
-  
-  rows.forEach(row => {
-    row.addEventListener('click', (e) => {
-      const now = Date.now();
-      const teamType = row.dataset.team;
-      const index = parseInt(row.dataset.index);
-      
-      // Check if this is a tap on the same row
-      if (lastTapRow === row && (now - lastTapTime) < 300) {
-        openEditRound(teamType, index);
-        lastTapRow = null;
-        lastTapTime = 0;
-      } else {
-        lastTapRow = row;
-        lastTapTime = now;
-      }
-    });
-  });
 }
 
 function renderTeamTable(teamType, teamData) {
@@ -788,7 +751,10 @@ function setupHintModal() {
 
   cancelBtn.addEventListener('click', closeModal);
   closeBtn.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', () => {
+    if (window.hintModalJustOpened) return;
+    closeModal();
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -844,6 +810,10 @@ function openHintModal(teamType, positionIndex, roundIndex = null) {
   document.getElementById('hintWord').value = currentHint;
 
   document.getElementById('hintModal').classList.remove('hidden');
+  window.hintModalJustOpened = true;
+  setTimeout(() => {
+    window.hintModalJustOpened = false;
+  }, 100);
   setTimeout(() => {
     const input = document.getElementById('hintWord');
     input.focus();
